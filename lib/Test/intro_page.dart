@@ -90,7 +90,7 @@ class _IntroPageState extends State<IntroPage> {
             ),
           ),
           Padding(
-            padding: const EdgeInsets.only(bottom: 240),
+            padding: const EdgeInsets.only(bottom: 260),
             child: Align(
               alignment: Alignment.center,
               child: Transform.rotate(
@@ -104,7 +104,7 @@ class _IntroPageState extends State<IntroPage> {
             ),
           ),
           Padding(
-            padding: const EdgeInsets.only(bottom: 240),
+            padding: const EdgeInsets.only(bottom: 260),
             child: Align(
               alignment: Alignment.center,
               child: Transform.rotate(
@@ -229,7 +229,8 @@ class _IntroPageState extends State<IntroPage> {
                         Icons.keyboard_double_arrow_right,
                         color: Colors.blue,
                       ),
-                      sliderButtonIconPadding: 10,
+                      sliderButtonIconPadding: 12,
+                      sliderRotate: false,
                       textStyle:
                           const TextStyle(fontSize: 20, color: Colors.white),
                       onSubmit: () {
