@@ -1,6 +1,8 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:http/http.dart';
+import 'package:testing_app/Services/request_type.dart';
 import 'package:testing_app/Services/StatusCode.dart';
 
 class HttpRequest {
@@ -46,6 +48,121 @@ class HttpRequest {
 
     // loading stopped
     if (onLoadChange != null) onLoadChange(false);
+  }
+
+  static Future post({
+    required String path,
+    String? baseUrl,
+    Function(bool isLoading)? onLoadChange,
+    Function(dynamic reponse)? onSuccess,
+    Function(String error)? onFailed,
+    Map<String, dynamic>? queryParameters,
+    bool decodeResponse = true,
+    Map<String, dynamic>? body,
+    Map<String, File>? files,
+  }) async {
+    // prepare uri
+    Uri uri = Uri.https(baseUrl ?? baseLink, path, queryParameters);
+    // loading started
+    if (onLoadChange != null) onLoadChange(true);
+    // sending request
+    http.Response response;
+    if (files != null) {
+      response = await sendMultiPart(
+        type: RequestType.POST,
+        uri: uri,
+        fields: body,
+        files: files,
+      );
+    } else {
+      response = await http.post(uri, headers: headers, body: body);
+    }
+    // global status check
+    await checkStatusCode(response.statusCode);
+    if (response.statusCode == StatusCode.OK) {
+      if (onSuccess != null) {
+        if (decodeResponse) {
+          onSuccess(jsonDecode(response.body));
+        } else {
+          onSuccess(response.body);
+        }
+      }
+    } else {
+      if (onFailed != null) {
+        onFailed(response.body);
+      }
+    }
+    // loading stopped
+    if (onLoadChange != null) onLoadChange(false);
+  }
+
+  static Future multipartRequest({
+    required String path,
+    String? baseUrl,
+    Function(bool isLoading)? onLoadChange,
+    Function(dynamic reponse)? onSuccess,
+    Function(String error)? onFailed,
+    bool decodeResponse = true,
+    Map<String, dynamic>? fields,
+    required File file,
+  }) async {
+    Uri uri = Uri.https(baseUrl ?? baseLink, path);
+    if (onLoadChange != null) onLoadChange(true);
+    Map<String, String> object = {};
+    fields!.forEach((key, value) {
+      object.addAll({key: value.toString()});
+    });
+    http.MultipartRequest request = http.MultipartRequest('POST', uri);
+    request.headers.addAll(headers);
+    request.fields.addAll(object);
+    request.files.add(await http.MultipartFile.fromPath('file', file.path));
+    final responseStream = await request.send();
+    final response = await http.Response.fromStream(responseStream);
+    await checkStatusCode(response.statusCode);
+    if (response.statusCode == StatusCode.OK) {
+      if (onSuccess != null) {
+        if (decodeResponse) {
+          onSuccess(jsonDecode(response.body));
+        } else {
+          onSuccess(response.body);
+        }
+      }
+    } else {
+      if (onFailed != null) {
+        onFailed(response.body);
+      }
+    }
+
+    if (onLoadChange != null) onLoadChange(false);
+  }
+
+  static Future<Response> sendMultiPart({
+    required Uri uri,
+    required String type,
+    Map<String, dynamic>? fields,
+    Map<String, File>? files,
+  }) async {
+    // init request
+    http.MultipartRequest request = http.MultipartRequest(type, uri);
+    // add headers to request
+    request.headers.addAll(headers);
+    // add fields to request
+    if (fields != null) {
+      Map<String, String> data = {};
+      fields.forEach((key, value) {
+        data.addAll({key: value.toString()});
+      });
+      request.fields.addAll(data);
+    }
+    // add files to request
+    if (files != null) {
+      files.forEach((key, file) async {
+        request.files.add(await http.MultipartFile.fromPath(key, file.path));
+      });
+    }
+    // send request
+    final responseStream = await request.send();
+    return await http.Response.fromStream(responseStream);
   }
 
   static checkStatusCode(int statusCode) {

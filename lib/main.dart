@@ -3,6 +3,8 @@ import 'package:dio/dio.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:lottie/lottie.dart';
+import 'package:testing_app/Services/extra_request.dart';
 import 'package:testing_app/Services/api_services.dart';
 import 'Model/product_model.dart';
 
@@ -36,17 +38,13 @@ class MyHomePage extends StatefulWidget {
   State<MyHomePage> createState() => _MyHomePageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
+class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
   List<Product> products = [];
   bool isLoaded = false;
 
   void getData() async {
-    setState(() {
-      isLoaded = false;
-    });
-    await HttpRequest.get(
+    await ExtraRequest.get(
       path: '/products',
-      // queryParameters: {'fcm_token': 'mweniniadwmAFAMFO', 'ds': 'dsd'},
       onSuccess: (response) {
         products = allProductsFromJson(response);
       },
@@ -57,9 +55,12 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
+  late final AnimationController _controller;
+
   @override
   void initState() {
     getData();
+    _controller = AnimationController(vsync: this);
     super.initState();
   }
 
@@ -69,28 +70,41 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Expanded(
-            child: Center(
-              child: Visibility(
-                  visible: isLoaded,
-                  replacement: const CupertinoActivityIndicator(
-                    radius: 13,
-                  ),
-                  child: ListView.builder(
-                      itemCount: products.length,
-                      itemBuilder: (context, index) {
-                        return ProductItem(product: products[index]);
-                      })),
-            ),
-          )
-        ],
+      backgroundColor: Colors.white,
+      body: Center(
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              // Lottie.network(
+              //     'https://lottie.host/4da99558-2be8-418a-b3b8-4dacf0a7f11f/LddFXtDhJB.json'),
+              Lottie.asset('assets/images/success.json',
+                  repeat: false, controller: _controller),
+              // Lottie.asset('assets/images/image404.json'),
+              // Expanded(
+              //   child: Center(
+              //     child: Visibility(
+              //         visible: isLoaded,
+              //         replacement: const CupertinoActivityIndicator(
+              //           radius: 13,
+              //         ),
+              //         child: ListView.builder(
+              //             itemCount: products.length,
+              //             itemBuilder: (context, index) {
+              //               return ProductItem(product: products[index]);
+              //             })),
+              //   ),
+              // )
+            ],
+          ),
+        ),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          getData();
+          _controller.reset();
+          _controller
+            ..duration = const Duration(milliseconds: 1500)
+            ..forward();
         },
         tooltip: 'Increment',
         child: const Icon(Icons.add),

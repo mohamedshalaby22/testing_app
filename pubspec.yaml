@@ -44,6 +44,7 @@ dependencies:
   flutter_dotenv: ^5.1.0
   animate_gradient: ^0.0.2+1
   slide_to_act: ^2.0.2
+  lottie: ^2.3.2
 
 
 dev_dependencies:
